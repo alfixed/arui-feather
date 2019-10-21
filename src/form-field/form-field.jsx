@@ -6,13 +6,15 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент поля формы.
  * Необходим для вертикального ритма в форме.
  */
 @cn('form-field')
-class FormField extends React.PureComponent {
+@performance()
+class FormField extends React.Component {
     static propTypes = {
         /** Дочерние элементы `FormField` */
         children: Type.oneOfType([Type.arrayOf(Type.node), Type.node]),
@@ -23,7 +25,9 @@ class FormField extends React.PureComponent {
         /** Размер компонента */
         size: Type.oneOf(['s', 'm', 'l', 'xl']),
         /** Тема компонента */
-        theme: Type.oneOf(['alfa-on-color', 'alfa-on-white'])
+        theme: Type.oneOf(['alfa-on-color', 'alfa-on-white']),
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -35,6 +39,7 @@ class FormField extends React.PureComponent {
             <div
                 className={ cn({ size: this.props.size }) }
                 id={ this.props.id }
+                data-test-id={ this.props['data-test-id'] }
             >
                 { this.props.children }
             </div>

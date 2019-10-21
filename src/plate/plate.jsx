@@ -13,12 +13,14 @@ import IconButton from '../icon-button/icon-button';
 import ThemeProvider from '../theme-provider/theme-provider';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент плашки.
  */
 @cn('plate')
-class Plate extends React.PureComponent {
+@performance()
+class Plate extends React.Component {
     static propTypes = {
         /** Управление наличием закрывающего крестика */
         hasCloser: Type.bool,
@@ -46,7 +48,9 @@ class Plate extends React.PureComponent {
          * Обработчик события нажатия на клавишу клавиатуры в момент, когда фокус находится на компоненте
          * @param {React.KeyboardEvent} event
          */
-        onKeyDown: Type.func
+        onKeyDown: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -75,6 +79,7 @@ class Plate extends React.PureComponent {
                     onClick={ this.handleClick }
                     onKeyDown={ this.handleKeyDown }
                     ref={ (node) => { this.root = node; } }
+                    data-test-id={ this.props['data-test-id'] }
                 >
                     <div className={ cn('content') }>
                         { this.props.children }

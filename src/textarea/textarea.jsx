@@ -8,6 +8,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 import scrollTo from '../lib/scroll-to';
 import { SCROLL_TO_CORRECTION } from '../vars';
 
@@ -15,10 +16,13 @@ import { SCROLL_TO_CORRECTION } from '../vars';
  * Компонент многострочного текстового ввода.
  */
 @cn('textarea')
-class Textarea extends React.PureComponent {
+@performance()
+class Textarea extends React.Component {
     static propTypes = {
         /** Дополнительный класс */
         className: Type.string,
+        /** Тип поля (filled только на белом фоне в размере m) */
+        view: Type.oneOf(['default', 'filled']),
         /** Управление возможностью компонента занимать всю ширину родителя */
         width: Type.oneOf(['default', 'available']),
         /** Управление автозаполнением компонента */
@@ -96,10 +100,13 @@ class Textarea extends React.PureComponent {
          * Обработчик события keyDown
          * @param {React.KeyboardEvent} event
          */
-        onKeyDown: Type.func
+        onKeyDown: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
+        view: 'default',
         width: 'default',
         autocomplete: true,
         disabled: false,
@@ -124,13 +131,13 @@ class Textarea extends React.PureComponent {
     control;
 
     render(cn) {
-        let value = this.props.value !== undefined ? this.props.value : this.state.value;
+        let value = this.props.value !== undefined
+            ? this.props.value
+            : this.state.value;
 
         let textareaProps = {
             className: cn('control'),
-            [this.props.autosize ? 'inputRef' : 'ref']: (control) => {
-                this.control = control;
-            },
+            [this.props.autosize ? 'inputRef' : 'ref']: (control) => { this.control = control; },
             autoComplete: this.props.autocomplete === false ? 'off' : 'on',
             disabled: this.props.disabled,
             id: this.props.id,
@@ -154,32 +161,40 @@ class Textarea extends React.PureComponent {
                     focused: this.state.focused,
                     autosize: this.props.autosize,
                     size: this.props.size,
+                    view: this.props.view,
                     width: this.props.width,
                     resize: this.props.resize,
                     invalid: !!this.props.error,
                     'has-label': !!this.props.label,
                     'has-value': !!value
                 }) }
-                ref={ (root) => {
-                    this.root = root;
-                } }
+                ref={ (root) => { this.root = root; } }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <span className={ cn('inner') }>
-                    { !!this.props.label && <span className={ cn('top') }>{ this.props.label }</span> }
-                    { !this.props.autosize ? (
-                        <textarea { ...textareaProps } />
-                    ) : (
-                        <TextareaAutosize
-                            { ...textareaProps }
-                            maxRows={ this.props.maxRows }
-                            minRows={ this.props.minRows }
-                            style={ { maxHeight: this.props.maxHeight } }
-                            onHeightChange={ this.handleHeightChange }
-                        />
-                    ) }
-                    { (this.props.error || this.props.hint) && (
-                        <span className={ cn('sub') }>{ this.props.error || this.props.hint }</span>
-                    ) }
+                    {
+                        !!this.props.label &&
+                        <span className={ cn('top') }>
+                            { this.props.label }
+                        </span>
+                    }
+                    {
+                        !this.props.autosize
+                            ? <textarea { ...textareaProps } />
+                            : <TextareaAutosize
+                                { ...textareaProps }
+                                maxRows={ this.props.maxRows }
+                                minRows={ this.props.minRows }
+                                style={ { maxHeight: this.props.maxHeight } }
+                                onHeightChange={ this.handleHeightChange }
+                            />
+                    }
+                    {
+                        (this.props.error || this.props.hint) &&
+                        <span className={ cn('sub') }>
+                            { this.props.error || this.props.hint }
+                        </span>
+                    }
                 </span>
             </span>
         );
@@ -272,8 +287,7 @@ class Textarea extends React.PureComponent {
         let elementRect = this.root.getBoundingClientRect();
 
         scrollTo({
-            // eslint-disable-next-line no-mixed-operators
-            targetY: elementRect.top + window.pageYOffset - SCROLL_TO_CORRECTION
+            targetY: (elementRect.top + window.pageYOffset) - SCROLL_TO_CORRECTION
         });
     }
 }

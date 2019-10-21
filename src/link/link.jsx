@@ -7,12 +7,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент ссылки.
  */
 @cn('link')
-class Link extends React.PureComponent {
+@performance()
+class Link extends React.Component {
     static propTypes = {
         /** Иконка ссылки */
         icon: Type.node,
@@ -68,7 +70,13 @@ class Link extends React.PureComponent {
          * Обработчик события снятия курсора с ссылки
          * @param {React.MouseEvent} event
          */
-        onMouseLeave: Type.func
+        onMouseLeave: Type.func,
+        /**
+         * Обработчик клика по disabled ссылке
+         */
+        onDisabledClick: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -112,7 +120,8 @@ class Link extends React.PureComponent {
             onFocus: this.handleFocus,
             onBlur: this.handleBlur,
             onMouseEnter: this.handleMouseEnter,
-            onMouseLeave: this.handleMouseLeave
+            onMouseLeave: this.handleMouseLeave,
+            'data-test-id': this.props['data-test-id']
         };
 
         if (this.props.target === '_blank') {
@@ -152,8 +161,12 @@ class Link extends React.PureComponent {
         if (this.props.pseudo) {
             event.preventDefault();
         }
-        if (this.props.onClick) {
+        if (!this.props.disabled && this.props.onClick) {
             this.props.onClick(event);
+        }
+
+        if (this.props.disabled && this.props.onDisabledClick) {
+            this.props.onDisabledClick(event);
         }
     }
 

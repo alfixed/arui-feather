@@ -8,12 +8,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент группы радио-кнопок.
  */
 @cn('radio-group')
-class RadioGroup extends React.PureComponent {
+@performance()
+class RadioGroup extends React.Component {
     static propTypes = {
         /** Тип группы кнопок */
         type: Type.oneOf(['normal', 'button', 'line']),
@@ -56,7 +58,9 @@ class RadioGroup extends React.PureComponent {
          * Обработчик изменения значения 'checked' одного из дочерних радио-кнопок
          * @param {string} value
          */
-        onChange: Type.func
+        onChange: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -120,6 +124,7 @@ class RadioGroup extends React.PureComponent {
                 tabIndex='-1'
                 onFocus={ this.handleFocus }
                 onBlur={ this.handleBlur }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <div className={ cn('inner') }>
                     {

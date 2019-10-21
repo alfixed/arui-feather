@@ -6,12 +6,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонента лейбла.
  */
 @cn('label')
-class Label extends React.PureComponent {
+@performance()
+class Label extends React.Component {
     static propTypes = {
         /** Размер компонента */
         size: Type.oneOf(['s', 'm', 'l', 'xl', '2xl', '3xl', '4xl']),
@@ -24,7 +26,9 @@ class Label extends React.PureComponent {
         /** Идентификатор компонента в DOM */
         id: Type.string,
         /** Управление возможностью рендерить компонент в одну сроку */
-        isNoWrap: Type.bool
+        isNoWrap: Type.bool,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -40,6 +44,7 @@ class Label extends React.PureComponent {
                     'no-wrap': this.props.isNoWrap
                 }) }
                 id={ this.props.id }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <span className={ cn('inner') }>
                     { this.props.children }

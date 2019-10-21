@@ -17,6 +17,7 @@ import getScrollbarWidth from '../lib/scrollbar-width';
 
 import cn from '../cn';
 import Mq from '../mq';
+import performance from '../performance';
 
 const SIDEBAR_WIDTH = 430;
 
@@ -42,7 +43,6 @@ function setCurrentPosition() {
 function setBodyClass({ visible, hasOverlay }) {
     document.body.classList[visible ? 'add' : 'remove']('sidebar-visible');
     if (hasOverlay) document.body.classList[visible ? 'add' : 'remove']('sidebar-overlay');
-    setCurrentPosition();
 }
 
 /**
@@ -61,7 +61,8 @@ function handleBodyScroll() {
  * Компонент боковой панели aka холодильник.
  */
 @cn('sidebar')
-class Sidebar extends React.PureComponent {
+@performance()
+class Sidebar extends React.Component {
     static propTypes = {
         /** Тема компонента */
         theme: Type.oneOf(['alfa-on-color', 'alfa-on-white']),
@@ -85,7 +86,9 @@ class Sidebar extends React.PureComponent {
          * Обработчик клика на элемент закрытия
          * @param {React.MouseEvent} event
          */
-        onCloserClick: Type.func
+        onCloserClick: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -107,6 +110,9 @@ class Sidebar extends React.PureComponent {
 
     componentWillReceiveProps(nextProps) {
         setBodyClass({ visible: nextProps.visible, hasOverlay: nextProps.hasOverlay });
+        if (this.state.isMobile) {
+            setCurrentPosition();
+        }
 
         if (nextProps.visible) {
             window.addEventListener('keydown', this.handleKeyDown);
@@ -121,6 +127,9 @@ class Sidebar extends React.PureComponent {
 
     componentWillUnmount() {
         setBodyClass({ visible: false, hasOverlay: this.props.hasOverlay });
+        if (this.state.isMobile) {
+            setCurrentPosition();
+        }
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('scroll', handleBodyScroll);
     }
@@ -140,7 +149,11 @@ class Sidebar extends React.PureComponent {
         let contentStyle = { marginRight: this.state.isMobile ? 0 : `-${offset}px` };
 
         return (
-            <PopupContainerProvider className={ cn({ visible }) } style={ style }>
+            <PopupContainerProvider
+                className={ cn({ visible }) }
+                style={ style }
+                data-test-id={ this.props['data-test-id'] }
+            >
                 <div
                     role='button'
                     tabIndex='-1'
@@ -165,7 +178,7 @@ class Sidebar extends React.PureComponent {
                                     size={ this.state.isMobile ? 'm' : 'l' }
                                     onClick={ this.handleClose }
                                 >
-                                    <IconClose size={ this.state.isMobile ? 'm' : 'l' } />
+                                    <IconClose size='l' />
                                 </IconButton>
                             </div>
                         }

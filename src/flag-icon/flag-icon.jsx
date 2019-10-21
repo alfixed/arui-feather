@@ -8,12 +8,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент флага в виде иконки.
  */
 @cn('flag-icon')
-class FlagIcon extends React.PureComponent {
+@performance()
+class FlagIcon extends React.Component {
     static propTypes = {
         /** Код страны из <a href="https://ru.wikipedia.org/wiki/ISO_3166-1_alpha-2" target="_blank">ISO 3166-1 alpha-2</a> */
         country: Type.string,
@@ -28,7 +30,9 @@ class FlagIcon extends React.PureComponent {
         /** Тема компонента */
         theme: Type.oneOf(['alfa-on-color', 'alfa-on-white']),
         /** Дополнительный класс */
-        className: Type.oneOfType([Type.func, Type.string])
+        className: Type.oneOfType([Type.func, Type.string]),
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -46,6 +50,7 @@ class FlagIcon extends React.PureComponent {
                     mode: this.props.mode,
                     size: this.props.size
                 }) }
+                data-test-id={ this.props['data-test-id'] }
             />
         );
     }

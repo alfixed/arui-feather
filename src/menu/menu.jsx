@@ -9,18 +9,20 @@ import React from 'react';
 import styleType from 'react-style-proptype';
 import Type from 'prop-types';
 
-import IconCheck from '../icon/ui/check';
+import IconCheck from '../icon/ui/tick';
 import MenuItem from '../menu-item/menu-item';
 
 import cn from '../cn';
 import { isNodeOutsideElement } from '../lib/window';
 import keyboardCode from '../lib/keyboard-code';
+import performance from '../performance';
 
 /**
  * Компонент меню.
  */
 @cn('menu')
-class Menu extends React.PureComponent {
+@performance(true)
+class Menu extends React.Component {
     static propTypes = {
         /** Тип расположения меню: 'horizontal' */
         view: Type.string,
@@ -111,7 +113,9 @@ class Menu extends React.PureComponent {
          * Обработчик события выделения элемента меню, принимает на вход переменную типа HighlightedItem
          * @param highlightedItem
          */
-        onHighlightItem: Type.func
+        onHighlightItem: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -191,6 +195,7 @@ class Menu extends React.PureComponent {
                 onKeyUp={ this.handleKeyUp }
                 onFocus={ this.handleFocus }
                 onBlur={ this.handleBlur }
+                data-test-id={ this.props['data-test-id'] }
             >
                 { !!this.props.content && this.renderMenuItemList(cn, this.props.content) }
             </div>

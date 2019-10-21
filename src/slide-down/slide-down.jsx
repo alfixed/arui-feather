@@ -8,13 +8,15 @@ import Type from 'prop-types';
 import autobind from 'core-decorators/lib/autobind';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент "расхлопа".
  * Позволяет скрывать и отображать контент.
  */
 @cn('slide-down')
-class SlideDown extends React.PureComponent {
+@performance()
+class SlideDown extends React.Component {
     static propTypes = {
         /** Управление состоянием expand/collapse компонента */
         isExpanded: Type.bool,
@@ -29,7 +31,9 @@ class SlideDown extends React.PureComponent {
         /** Обработчик события начала анимации */
         onAnimationStart: Type.func,
         /** Обработчик события окончания анимации */
-        onAnimationEnd: Type.func
+        onAnimationEnd: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     state = {
@@ -63,6 +67,7 @@ class SlideDown extends React.PureComponent {
                 }
                 onTransitionEnd={ this.handleTransitionEnd }
                 ref={ (slideDown) => { this.slideDown = slideDown; } }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <div
                     className={ cn('content', { expanded: this.state.isHeightAuto }) }

@@ -13,6 +13,7 @@ import IconButton from '../icon-button/icon-button';
 import MaskedInput from '../masked-input/masked-input';
 
 import cn from '../cn';
+import performance from '../performance';
 import scrollTo from '../lib/scroll-to';
 import { SCROLL_TO_CORRECTION } from '../vars';
 
@@ -20,6 +21,7 @@ import { SCROLL_TO_CORRECTION } from '../vars';
  * Компонент текстового поля ввода.
  */
 @cn('input', MaskedInput)
+@performance()
 class Input extends React.Component {
     static propTypes = {
         /**
@@ -28,10 +30,15 @@ class Input extends React.Component {
          * Подробнее: <a href="http://w3c.github.io/html/sec-forms.html#does-not-apply" target="_blank">http://w3c.github.io/html/sec-forms.html#does-not-apply</a>
          */
         type: Type.oneOf(['number', 'card', 'email', 'file', 'hidden', 'money', 'password', 'tel', 'text']),
+        /** Тип инпута (filled только на белом фоне в размере m) */
+        view: Type.oneOf(['default', 'filled']),
         /** Управление возможностью компонента занимать всю ширину родителя */
         width: Type.oneOf(['default', 'available']),
-        /** Управление автозаполнением компонента */
-        autocomplete: Type.bool,
+        /**
+         * Управление автозаполнением компонента. В случае передачи `true` или `false` подставляет `on` или `off`.
+         * Строка подставляется как есть.
+         */
+        autocomplete: Type.oneOfType([Type.bool, Type.string]),
         /** Управление возможностью изменения атрибута компонента, установка соответствующего класса-модификатора для оформления */
         disabled: Type.bool,
         /** Управление возможностью изменения атрибута компонента (без установки класса-модификатора для оформления) */
@@ -81,6 +88,8 @@ class Input extends React.Component {
         hint: Type.node,
         /** Отображение ошибки */
         error: Type.node,
+        /** Сброс ошибки при установке фокуса */
+        resetError: Type.bool,
         /** Размер компонента */
         size: Type.oneOf(['s', 'm', 'l', 'xl']),
         /** Тема компонента */
@@ -153,17 +162,22 @@ class Input extends React.Component {
          * Обработчик, вызываемый перед началом ввода в маскированное поле
          * @param {React.ChangeEvent} event
          */
-        onProcessMaskInputEvent: Type.func
+        onProcessMaskInputEvent: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
         formNoValidate: false,
         size: 'm',
-        type: 'text'
+        type: 'text',
+        view: 'default',
+        resetError: true
     };
 
     state = {
         focused: false,
+        error: this.props.error || null,
         value: this.props.defaultValue || ''
     };
 
@@ -182,8 +196,16 @@ class Input extends React.Component {
      */
     control;
 
+    componentWillReceiveProps(nextProps) {
+        this.setState({
+            error: nextProps.error
+        });
+    }
+
+
     render(cn, MaskedInput) {
         let hasAddons = !!this.props.rightAddons || !!this.props.leftAddons;
+        let hasLeftAddons = !!this.props.leftAddons;
         let value = this.props.value !== undefined
             ? this.props.value
             : this.state.value;
@@ -193,16 +215,18 @@ class Input extends React.Component {
             <span
                 className={ cn({
                     type: this.props.type,
+                    view: this.props.view,
                     disabled: this.props.disabled,
                     focused,
                     size: this.props.size,
                     width: this.props.width,
                     'has-addons': hasAddons,
+                    'has-left-addons': hasLeftAddons,
                     'has-clear': !!this.props.clear,
                     'has-icon': !!this.props.icon,
                     'has-label': !!this.props.label,
                     'has-value': !!value,
-                    invalid: !!this.props.error
+                    invalid: !!this.state.error
                 }) }
                 ref={ (root) => { this.root = root; } }
             >
@@ -215,9 +239,9 @@ class Input extends React.Component {
                     }
                     { this.renderContent(cn, MaskedInput) }
                     {
-                        (this.props.error || this.props.hint) &&
+                        (this.state.error || this.props.hint) &&
                         <span className={ cn('sub') }>
-                            { this.props.error || this.props.hint }
+                            { this.state.error || this.props.hint }
                         </span>
                     }
                 </span>
@@ -234,8 +258,9 @@ class Input extends React.Component {
         let inputProps = {
             className: cn('control'),
             type: this.props.type,
+            view: this.props.view,
             formNoValidate: this.props.formNoValidate,
-            autoComplete: this.props.autocomplete === false ? 'off' : 'on',
+            autoComplete: this.getAutoCompleteValue(),
             disabled: this.props.disabled || this.props.disabledAttr,
             maxLength: this.props.maxLength,
             id: this.props.id,
@@ -287,6 +312,7 @@ class Input extends React.Component {
                     <IconButton
                         className={ cn('clear') }
                         size={ this.props.size }
+                        tabIndex={ -1 }
                         onClick={ this.handleClearClick }
                     >
                         <IconClose
@@ -313,6 +339,8 @@ class Input extends React.Component {
     @autobind
     handleFocus(event) {
         this.setState({ focused: true });
+        this.enableMouseWheel();
+        this.resetError();
 
         if (this.props.onFocus) {
             this.props.onFocus(event);
@@ -329,6 +357,7 @@ class Input extends React.Component {
     @autobind
     handleBlur(event) {
         this.setState({ focused: false });
+        this.disableMouseWheel();
 
         if (this.props.onBlur) {
             this.props.onBlur(event);
@@ -397,6 +426,42 @@ class Input extends React.Component {
     handleTouchCancel(event) {
         if (this.props.onTouchCancel) {
             this.props.onTouchCancel(event);
+        }
+    }
+
+    getAutoCompleteValue() {
+        if (typeof this.props.autocomplete === 'string') {
+            return this.props.autocomplete;
+        }
+
+        return this.props.autocomplete === false ? 'off' : 'on';
+    }
+
+    /**
+     * Разблокирует возможность скролла в поле ввода
+     *
+     * @public
+     * @returns {void}
+     */
+    enableMouseWheel() {
+        const input = this.control instanceof MaskedInput ? this.control.input : this.control;
+
+        if (input) {
+            input.onwheel = () => true;
+        }
+    }
+
+    /**
+     * Блокирует возможность скролла в поле ввода
+     *
+     * @public
+     * @returns {void}
+     */
+    disableMouseWheel() {
+        const input = this.control instanceof MaskedInput ? this.control.getControl() : this.control;
+
+        if (input) {
+            input.onwheel = () => false;
         }
     }
 
@@ -516,6 +581,19 @@ class Input extends React.Component {
      */
     getFocused() {
         return this.props.focused !== undefined ? this.props.focused : this.state.focused;
+    }
+
+    /**
+     * Сбрасывает состояние ошибки.
+     *
+     * @returns {void}
+     */
+    resetError() {
+        if (this.props.resetError) {
+            this.setState({
+                error: null
+            });
+        }
     }
 }
 

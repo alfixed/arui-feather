@@ -20,6 +20,7 @@ import ResizeSensor from '../resize-sensor/resize-sensor';
 import cn from '../cn';
 import { HtmlElement } from '../lib/prop-types';
 import keyboardCode from '../lib/keyboard-code';
+import performance from '../performance';
 import scrollTo from '../lib/scroll-to';
 import { SCROLL_TO_CORRECTION, SCROLL_TO_NORMAL_DURATION } from '../vars';
 
@@ -43,7 +44,8 @@ class SelectButton extends Button {}
  * Компонент выпадающего списка.
  */
 @cn('select', SelectButton, Popup)
-class Select extends React.PureComponent {
+@performance(true)
+class Select extends React.Component {
     static propTypes = {
         /** Дополнительный класс */
         className: Type.string,
@@ -51,6 +53,8 @@ class Select extends React.PureComponent {
         mode: Type.oneOf(['check', 'radio', 'radio-check']),
         /** Размещение заголовка групп: обычное или в одну строку с первым элементом группы */
         groupView: Type.oneOf(['default', 'line']),
+        /** Тип поля (filled только на белом фоне в размере m) */
+        view: Type.oneOf(['default', 'filled']),
         /** Управление возможностью компонента занимать всю ширину родителя */
         width: Type.oneOf(['default', 'available']),
         /** Направления, в которые может открываться попап компонента */
@@ -184,7 +188,9 @@ class Select extends React.PureComponent {
         /** Кастомный метод рендера содержимого кнопки, принимает на вход: массив элементов типа CheckedOption */
         renderButtonContent: Type.func,
         /** Максимальная высота попапа */
-        maxHeight: Type.number
+        maxHeight: Type.number,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -193,6 +199,7 @@ class Select extends React.PureComponent {
         disabled: false,
         size: 'm',
         directions: ['bottom-left', 'bottom-right', 'top-left', 'top-right'],
+        view: 'default',
         width: 'default',
         equalPopupWidth: false,
         options: [],
@@ -271,6 +278,12 @@ class Select extends React.PureComponent {
         });
     }
 
+    componentDidUpdate() {
+        if (this.state.opened) {
+            this.updatePopupStyles();
+        }
+    }
+
     render(cn, SelectButton, Popup) {
         let value = this.getValue();
 
@@ -279,6 +292,7 @@ class Select extends React.PureComponent {
                 className={ cn({
                     mode: this.props.mode,
                     size: this.props.size,
+                    view: this.props.view,
                     width: this.props.width,
                     checked: value.length > 0,
                     disabled: this.props.disabled,
@@ -292,6 +306,7 @@ class Select extends React.PureComponent {
                 ref={ (root) => {
                     this.root = root;
                 } }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <span className={ cn('inner') }>
                     <input id={ this.props.id } name={ this.props.name } type='hidden' value={ value } />
@@ -303,9 +318,9 @@ class Select extends React.PureComponent {
                     </Mq>
 
                     { (this.props.error || this.props.hint) && (
-                        // The <div /> wrapper is need to fix safari's bug of "jumping" element with
+                        // The <div /> wrapper is needed to fix Safari bug of "jumping" element with
                         // `display: table-caption`. See: https://github.com/alfa-laboratory/arui-feather/pull/656
-                        <div>
+                        <div className={ cn('sub-wrapper') }>
                             <span className={ cn('sub') }>{ this.props.error || this.props.hint }</span>
                         </div>
                     ) }
@@ -334,7 +349,7 @@ class Select extends React.PureComponent {
         switch (this.props.size) {
             case 's':
             case 'm':
-                tickSize = 's';
+                tickSize = this.props.view === 'filled' ? 'l' : 's';
                 break;
             case 'l':
                 tickSize = 'm';
@@ -362,7 +377,10 @@ class Select extends React.PureComponent {
                         <ToggledIcon size={ tickSize } />
                     </IconButton>
                 ) }
-                <ResizeSensor key='addon-sensor' onResize={ this.updatePopupStyles } />
+
+                { this.getOpened() && (
+                    <ResizeSensor key='addon-sensor' onResize={ this.updatePopupStyles } />
+                ) }
             </SelectButton>
         );
     }

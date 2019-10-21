@@ -7,12 +7,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент формы.
  */
 @cn('form')
-class Form extends React.PureComponent {
+@performance()
+class Form extends React.Component {
     static propTypes = {
         /** Способ кодирования данных формы при их отправке */
         enctype: Type.oneOf(['application/x-www-form-urlencoded', 'multipart/form-data', 'text/plain']),
@@ -44,7 +46,9 @@ class Form extends React.PureComponent {
          * Обработчик отправки формы
          * @param {React.FormEvent} event
          */
-        onSubmit: Type.func
+        onSubmit: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -71,6 +75,7 @@ class Form extends React.PureComponent {
                 id={ this.props.id }
                 name={ this.props.name }
                 onSubmit={ this.handleSubmit }
+                data-test-id={ this.props['data-test-id'] }
             >
                 { this.props.children }
                 {

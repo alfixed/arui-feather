@@ -10,12 +10,14 @@ import IconClose from '../icon/ui/close';
 import IconButton from '../icon-button/icon-button';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Заголовок в Popup.
  */
 @cn('popup-header')
-class PopupHeader extends React.PureComponent {
+@performance()
+class PopupHeader extends React.Component {
     static propTypes = {
         /** Размер компонента */
         size: Type.oneOf(['s', 'm', 'l', 'xl']),
@@ -31,7 +33,9 @@ class PopupHeader extends React.PureComponent {
          * Обработчик клика по кнопке закрытия
          * @param {React.MouseEvent} event
          */
-        onCloserClick: Type.func
+        onCloserClick: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     render(cn) {
@@ -41,6 +45,7 @@ class PopupHeader extends React.PureComponent {
                     size: this.props.size
                 }) }
                 id={ this.props.id }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <IconButton
                     className={ cn('closer') }

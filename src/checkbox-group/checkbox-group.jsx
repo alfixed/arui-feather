@@ -8,12 +8,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент группы чекбоксов.
  */
 @cn('checkbox-group')
-class CheckBoxGroup extends React.PureComponent {
+@performance()
+class CheckBoxGroup extends React.Component {
     static propTypes = {
         /** Тип компонента */
         type: Type.oneOf(['normal', 'button', 'line']),
@@ -52,7 +54,9 @@ class CheckBoxGroup extends React.PureComponent {
          * Обработчик изменения значения 'checked' одного из дочерних радио-кнопок
          * @param {string[]} value
          */
-        onChange: Type.func
+        onChange: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -117,6 +121,7 @@ class CheckBoxGroup extends React.PureComponent {
                 tabIndex='-1'
                 onFocus={ this.handleFocus }
                 onBlur={ this.handleBlur }
+                data-test-id={ this.props['data-test-id'] }
             >
                 {
                     !!this.props.label &&

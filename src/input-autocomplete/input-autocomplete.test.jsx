@@ -48,6 +48,11 @@ describe('input-autocomplete', () => {
         expect(optionsNode.length).toBe(OPTIONS2.length);
     });
 
+    it('should render input with provided default value', () => {
+        let inputAutocomplete = mount(<InputAutocomplete options={ OPTIONS } defaultValue='default' />);
+        expect(inputAutocomplete).toMatchSnapshot();
+    });
+
     it('should render input and popup with options', () => {
         let inputAutocomplete = mount(<InputAutocomplete options={ OPTIONS } />);
 
@@ -256,6 +261,30 @@ describe('input-autocomplete', () => {
 
         setTimeout(() => {
             expect(inputNode.blur).toHaveBeenCalled();
+            done();
+        }, 0);
+    });
+
+    it('should have disabled option, which can not be selected, if disabled property is set true', (done) => {
+        const OPTIONS = [
+            { value: 'VKontakte', props: { disabled: true } },
+            { value: 'Facebook' },
+            { value: 'Twitter' }
+        ];
+        let onChange = jest.fn();
+
+        let inputAutocomplete = mount(
+            <InputAutocomplete options={ OPTIONS } onChange={ onChange } />
+        );
+
+        inputAutocomplete.find('.menu-item').at(0).simulate('click');
+
+        let firstOptionNode = inputAutocomplete.find('.menu-item').at(0);
+
+        expect(firstOptionNode.props().className).toContain('menu-item_disabled');
+
+        setTimeout(() => {
+            expect(onChange).toHaveBeenCalledTimes(0);
             done();
         }, 0);
     });

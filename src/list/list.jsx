@@ -6,12 +6,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент списка.
  */
 @cn('list')
-class List extends React.PureComponent {
+@performance(true)
+class List extends React.Component {
     static propTypes = {
         /** Список элементов */
         items: Type.arrayOf(Type.shape({
@@ -27,7 +29,9 @@ class List extends React.PureComponent {
         /** Дополнительный класс */
         className: Type.string,
         /** Идентификатор компонента в DOM */
-        id: Type.string
+        id: Type.string,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     render(cn) {
@@ -46,7 +50,8 @@ class List extends React.PureComponent {
             className: cn({
                 type: this.props.type
             }),
-            id: this.props.id
+            id: this.props.id,
+            'data-test-id': this.props['data-test-id']
         };
 
         return React.createElement(

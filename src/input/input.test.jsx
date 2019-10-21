@@ -184,6 +184,13 @@ describe('input', () => {
         expect(controlNode.props().autoComplete).toBe('on');
     });
 
+    it('should render string autocomplete attribute', () => {
+        let input = shallow(<Input autocomplete='email' />);
+        let controlNode = input.find('input');
+
+        expect(controlNode.props().autoComplete).toBe('email');
+    });
+
     it('should set value from props', () => {
         let input = shallow(<Input value='text' />);
         let controlNode = input.find('input');
@@ -463,6 +470,36 @@ describe('input', () => {
             controlNode.simulate('touchCancel');
             expect(onTouchCancel).toHaveBeenCalled();
             expect(onTouchCancel).toHaveBeenCalledWith(expect.objectContaining({ type: 'touchcancel' }));
+        }
+    );
+
+    it(
+        'should call `enableMouseWheel` and `disableMouseWheel` after focus and blur',
+        () => {
+            let input = mount(<Input />);
+            let controlNode = input.find('input');
+
+            jest.spyOn(input.instance(), 'enableMouseWheel');
+            jest.spyOn(input.instance(), 'disableMouseWheel');
+
+            controlNode.simulate('focus');
+            expect(input.instance().enableMouseWheel).toHaveBeenCalled();
+
+            controlNode.simulate('blur');
+            expect(input.instance().disableMouseWheel).toHaveBeenCalled();
+        }
+    );
+
+    it(
+        'should call `resetError` after focus',
+        () => {
+            let input = mount(<Input />);
+            let controlNode = input.find('input');
+
+            jest.spyOn(input.instance(), 'resetError');
+
+            controlNode.simulate('focus');
+            expect(input.instance().resetError).toHaveBeenCalled();
         }
     );
 });

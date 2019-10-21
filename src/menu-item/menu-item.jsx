@@ -10,12 +10,14 @@ import Dropdown from '../dropdown/dropdown';
 import Link from '../link/link';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент элемента меню. Как правило, используется совместно с `Menu`.
  */
 @cn('menu-item')
-class MenuItem extends React.PureComponent {
+@performance()
+class MenuItem extends React.Component {
     static propTypes = {
         /** Тип элемента меню */
         type: Type.oneOf(['link', 'dropdown', 'block']),
@@ -72,7 +74,9 @@ class MenuItem extends React.PureComponent {
          * Обработчик события снятия курсора с элемента меню
          * @param {React.MouseEvent} event
          */
-        onMouseLeave: Type.func
+        onMouseLeave: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -92,7 +96,8 @@ class MenuItem extends React.PureComponent {
         let content = this.props.children || this.props.value;
         let itemElement;
         let menuItemProps = {
-            ref: (root) => { this.root = root; }
+            ref: (root) => { this.root = root; },
+            'data-test-id': this.props['data-test-id']
         };
 
         switch (this.props.type) {

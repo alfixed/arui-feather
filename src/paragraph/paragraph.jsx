@@ -6,15 +6,17 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент параграфа текста.
  */
 @cn('paragraph')
-class Paragraph extends React.PureComponent {
+@performance()
+class Paragraph extends React.Component {
     static propTypes = {
         /** Тип параграфа */
-        view: Type.oneOf(['lead', 'normal']),
+        view: Type.oneOf(['lead', 'normal', 'small']),
         /** Маркер параграфа */
         mark: Type.node,
         /** Дочерние элементы `Paragraph` */
@@ -24,12 +26,18 @@ class Paragraph extends React.PureComponent {
         /** Дополнительный класс */
         className: Type.string,
         /** Идентификатор компонента в DOM */
-        id: Type.string
+        id: Type.string,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     render(cn) {
         return (
-            <p className={ cn({ view: this.props.view }) } id={ this.props.id }>
+            <p
+                className={ cn({ view: this.props.view }) }
+                id={ this.props.id }
+                data-test-id={ this.props['data-test-id'] }
+            >
                 { this.props.mark &&
                     <span className={ cn('marker') }>{ this.props.mark }</span>
                 }

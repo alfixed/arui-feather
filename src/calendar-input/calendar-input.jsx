@@ -22,6 +22,7 @@ import keyboardCode from '../lib/keyboard-code';
 import Modernizr from '../modernizr';
 import { isNodeOutsideElement } from '../lib/window';
 import { parseDate, calculateMonth, changeDateFormat } from './utils';
+import performance from '../performance';
 
 /**
  * NB: В нативном календаре нельзя менять формат даты. Приемлем только YYYY-MM-DD формат.
@@ -38,7 +39,8 @@ const SUPPORTS_INPUT_TYPE_DATE = IS_BROWSER && Modernizr.inputtypes.date;
  * Компонент для ввода даты.
  */
 @cn('calendar-input', Input, Popup)
-class CalendarInput extends React.PureComponent {
+@performance(true)
+class CalendarInput extends React.Component {
     static propTypes = {
         /** Содержимое поля ввода */
         value: Type.string,
@@ -74,6 +76,8 @@ class CalendarInput extends React.PureComponent {
         }),
         /** Управление возможностью раскрытия календаря */
         opened: Type.bool,
+        /** Тип инпута (filled только на белом фоне в размере m) */
+        view: Type.oneOf(['default', 'filled']),
         /** Управление возможностью компонента занимать всю ширину родителя */
         width: Type.oneOf(['default', 'available']),
         /** Направления, в которые может открываться попап компонента */
@@ -81,6 +85,8 @@ class CalendarInput extends React.PureComponent {
             'anchor', 'top-left', 'top-center', 'top-right', 'left-top', 'left-center', 'left-bottom', 'right-top',
             'right-center', 'right-bottom', 'bottom-left', 'bottom-center', 'bottom-right'
         ])),
+        /** Управление автозаполнением компонента */
+        autocomplete: Type.bool,
         /** Управление возможностью изменения значения компонента */
         disabled: Type.bool,
         /** Размер компонента */
@@ -163,7 +169,9 @@ class CalendarInput extends React.PureComponent {
          * Обработчик события нажатия на клавишу клавиатуры в момент, когда фокус находится на текстовом поле
          * @param {React.KeyboardEvent} event
          */
-        onInputKeyDown: Type.func
+        onInputKeyDown: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -275,6 +283,7 @@ class CalendarInput extends React.PureComponent {
         return (
             <span
                 className={ cn({ width: this.props.width }) }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <span
                     { ...wrapperProps }
@@ -306,6 +315,7 @@ class CalendarInput extends React.PureComponent {
                             this.customCalendarTarget = customCalendarTarget;
                         } }
                         { ...commonProps }
+                        autocomplete={ this.props.autocomplete }
                         className={ cn('custom-control') }
                         disabledAttr={ this.isNativeInput() || this.isMobilePopup() }
                         focused={ this.state.isInputFocused || this.state.isCalendarFocused }
@@ -318,6 +328,7 @@ class CalendarInput extends React.PureComponent {
                         hint={ this.props.hint }
                         error={ this.props.error }
                         value={ value }
+                        view={ this.props.view }
                         width={ this.props.width }
                         id={ this.props.id }
                         name={ this.props.name }
@@ -357,6 +368,7 @@ class CalendarInput extends React.PureComponent {
                 directions={ this.props.directions }
                 target={ this.isMobilePopup() ? 'screen' : 'anchor' }
                 header={ this.isMobilePopup() && this.renderMobileHeader() }
+                padded={ false }
             >
                 <div className={ cn('calendar-wrapper', { mobile: this.isMobilePopup() }) }>
                     <Calendar

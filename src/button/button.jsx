@@ -8,12 +8,14 @@ import Type from 'prop-types';
 
 import cn from '../cn';
 import keyboardCode from '../lib/keyboard-code';
+import performance from '../performance';
 
 /**
  * Компонент кнопки (да, она нажимается!).
  */
 @cn('button')
-class Button extends React.PureComponent {
+@performance()
+class Button extends React.Component {
     static propTypes = {
         /** Текст кнопки */
         text: Type.node,
@@ -55,6 +57,8 @@ class Button extends React.PureComponent {
         checked: Type.bool,
         /** Дочерние элементы `Button` */
         children: Type.oneOfType([Type.arrayOf(Type.node), Type.node]),
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string,
         /** Тема компонента */
         theme: Type.oneOf(['alfa-on-color', 'alfa-on-white']),
         /** Дополнительный класс */
@@ -174,7 +178,8 @@ class Button extends React.PureComponent {
             onMouseUp: this.handleMouseUp,
             onMouseOut: this.handleMouseOut,
             onKeyDown: this.handleKeyDown,
-            onKeyUp: this.handleKeyUp
+            onKeyUp: this.handleKeyUp,
+            'data-test-id': this.props['data-test-id']
         };
 
         let buttonContent = [

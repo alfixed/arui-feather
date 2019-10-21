@@ -6,12 +6,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент показывающий крутящееся кольцо загрузки.
  */
 @cn('spin')
-class Spin extends React.PureComponent {
+@performance()
+class Spin extends React.Component {
     static propTypes = {
         /** Управление видимостью компонента */
         visible: Type.bool,
@@ -22,7 +24,9 @@ class Spin extends React.PureComponent {
         /** Дополнительный класс */
         className: Type.string,
         /** Идентификатор компонента в DOM */
-        id: Type.string
+        id: Type.string,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -38,6 +42,7 @@ class Spin extends React.PureComponent {
                     visible: this.props.visible
                 }) }
                 id={ this.props.id }
+                data-test-id={ this.props['data-test-id'] }
             />
         );
     }

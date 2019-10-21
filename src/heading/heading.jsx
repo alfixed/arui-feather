@@ -6,6 +6,7 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 const HEADING_LEVEL = {
     xl: 1,
@@ -19,7 +20,8 @@ const HEADING_LEVEL = {
  * Компонент заголовка.
  */
 @cn('heading')
-class Heading extends React.PureComponent {
+@performance()
+class Heading extends React.Component {
     static propTypes = {
         /** Дочерние элементы `Heading` */
         children: Type.oneOfType([Type.arrayOf(Type.node), Type.node]),
@@ -30,7 +32,9 @@ class Heading extends React.PureComponent {
         /** Дополнительный класс */
         className: Type.string,
         /** Идентификатор компонента в DOM */
-        id: Type.string
+        id: Type.string,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -42,7 +46,8 @@ class Heading extends React.PureComponent {
             className: cn({
                 size: this.props.size
             }),
-            id: this.props.id
+            id: this.props.id,
+            'data-test-id': this.props['data-test-id']
         };
 
         return React.createElement(`h${HEADING_LEVEL[this.props.size]}`,

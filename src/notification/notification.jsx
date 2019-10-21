@@ -17,12 +17,14 @@ import Swipeable from '../swipeable';
 
 import cn from '../cn';
 import { isNodeOutsideElement } from '../lib/window';
+import performance from '../performance';
 
 /**
  * Компонент всплывающего окна.
  */
 @cn('notification')
-class Notification extends React.PureComponent {
+@performance()
+class Notification extends React.Component {
     static propTypes = {
         /** Тип компонента */
         status: Type.oneOf(['error', 'fail', 'ok']),
@@ -79,13 +81,15 @@ class Notification extends React.PureComponent {
          * Обработчик клика по компоненту
          * @param {React.MouseEvent} event
          */
-        onClick: Type.func
+        onClick: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
         autoCloseDelay: 5000,
-        stickTo: 'left',
-        offset: 0,
+        stickTo: 'right',
+        offset: 12,
         hasCloser: true
     };
 
@@ -141,6 +145,7 @@ class Notification extends React.PureComponent {
                         visible: this.props.visible,
                         status: this.props.status,
                         hovered: this.state.hovered,
+                        'has-closer': this.props.hasCloser,
                         'stick-to': this.props.stickTo
                     }) }
                     id={ this.props.id }
@@ -149,12 +154,14 @@ class Notification extends React.PureComponent {
                     onMouseLeave={ this.handleMouseLeave }
                     onClick={ this.handleClick }
                     onKeyDown={ this.handleKeyDown }
+                    data-test-id={ this.props['data-test-id'] }
                 >
                     <div className={ cn('icon') }>
                         {
                             this.props.icon ||
                             <ToggledIcon
                                 colored={ this.props.status === 'ok' || this.props.status === 'error' }
+                                theme={ this.props.theme === 'alfa-on-color' ? 'alfa-on-white' : 'alfa-on-color' }
                                 size='m'
                             />
                         }
@@ -164,9 +171,11 @@ class Notification extends React.PureComponent {
                             { this.props.title }
                         </div>
                     }
-                    <div className={ cn('content') }>
-                        { this.props.children }
-                    </div>
+                    { this.props.children &&
+                        <div className={ cn('content') }>
+                            { this.props.children }
+                        </div>
+                    }
                     {
                         this.props.hasCloser &&
                         <IconButton
@@ -175,7 +184,8 @@ class Notification extends React.PureComponent {
                             onClick={ this.handleCloserClick }
                         >
                             <IconClose
-                                size='m'
+                                size='s'
+                                theme={ this.props.theme === 'alfa-on-color' ? 'alfa-on-white' : 'alfa-on-color' }
                             />
                         </IconButton>
                     }

@@ -7,12 +7,14 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
 
 /**
  * Компонент группы полей для текстового ввода.
  */
 @cn('input-group')
-class InputGroup extends React.PureComponent {
+@performance()
+class InputGroup extends React.Component {
     static propTypes = {
         /** Управление возможностью компонента занимать всю ширину родителя */
         width: Type.oneOf(['default', 'available']),
@@ -23,7 +25,9 @@ class InputGroup extends React.PureComponent {
         /** Дополнительный класс */
         className: Type.string,
         /** Идентификатор компонента в DOM */
-        id: Type.string
+        id: Type.string,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     render(cn) {
@@ -59,6 +63,7 @@ class InputGroup extends React.PureComponent {
                 id={ this.props.id }
                 role='group'
                 tabIndex='-1'
+                data-test-id={ this.props['data-test-id'] }
             >
                 { createFragment(inputGroupParts) }
             </span>

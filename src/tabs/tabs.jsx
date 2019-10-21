@@ -6,12 +6,15 @@ import React from 'react';
 import Type from 'prop-types';
 
 import cn from '../cn';
+import performance from '../performance';
+
 
 /**
  * Компонент навигации в виде табов. Как правило используется совместно с `TabItem`.
  */
 @cn('tabs')
-export default class Tabs extends React.PureComponent {
+@performance()
+export default class Tabs extends React.Component {
     static propTypes = {
         /** Управление возможность скроллить компонент по-горизонтали */
         scrollable: Type.bool,
@@ -22,7 +25,9 @@ export default class Tabs extends React.PureComponent {
         /** Дополнительный класс */
         className: Type.string,
         /** Идентификатор компонента в DOM */
-        id: Type.string
+        id: Type.string,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -31,7 +36,11 @@ export default class Tabs extends React.PureComponent {
 
     render(cn) {
         return (
-            <div className={ cn({ scrollable: this.props.scrollable }) } id={ this.props.id }>
+            <div
+                className={ cn({ scrollable: this.props.scrollable }) }
+                id={ this.props.id }
+                data-test-id={ this.props['data-test-id'] }
+            >
                 <div className={ cn('panel') }>
                     <div className={ cn('content') }>
                         { this.props.children }

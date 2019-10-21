@@ -10,6 +10,7 @@ import Button from '../button/button';
 import IconAttachment from '../icon/action/attachment';
 
 import cn from '../cn';
+import performance from '../performance';
 
 const MULTIPLE_TEXTS = ['файл', 'файла', 'файлов'];
 
@@ -67,7 +68,8 @@ function isEqualArray(array1, array2) {
  * Компонент прикрепления файлов.
  */
 @cn('attach')
-class Attach extends React.PureComponent {
+@performance()
+class Attach extends React.Component {
     static propTypes = {
         /** Содержимое поля ввода, указанное по умолчанию. Принимает массив объектов типа File или null. */
         value: Type.array, // eslint-disable-line react/forbid-prop-types
@@ -154,7 +156,9 @@ class Attach extends React.PureComponent {
          * Обработчик события снятия курсора с кнопки
          * @param {React.MouseEvent} event
          */
-        onMouseLeave: Type.func
+        onMouseLeave: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -198,6 +202,7 @@ class Attach extends React.PureComponent {
                 onMouseEnter={ this.handleMouseEnter }
                 onMouseLeave={ this.handleMouseLeave }
                 ref={ (root) => { this.root = root; } }
+                data-test-id={ this.props['data-test-id'] }
             >
                 { this.renderButton(cn) }
                 { this.renderStatusText(cn) }

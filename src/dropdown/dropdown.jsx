@@ -11,13 +11,15 @@ import Link from '../link/link';
 import Popup from '../popup/popup';
 
 import cn from '../cn';
+import performance from '../performance';
 import { POPUP_MAIN_OFFSET } from '../vars';
 
 /**
  * Компонент «выпадашка»: ссылка или кнопка. По клику показывается Popup.
  */
 @cn('dropdown')
-class Dropdown extends React.PureComponent {
+@performance()
+class Dropdown extends React.Component {
     static propTypes = {
         /** Тип компонента */
         switcherType: Type.oneOf(['link', 'button']),
@@ -96,7 +98,9 @@ class Dropdown extends React.PureComponent {
          * Обработчик события клика попапа за пределами попапа
          * @param {React.MouseEvent} event
          */
-        onPopupClickOutside: Type.func
+        onPopupClickOutside: Type.func,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -124,7 +128,11 @@ class Dropdown extends React.PureComponent {
 
     render(cn) {
         return (
-            <div className={ cn() } id={ this.props.id }>
+            <div
+                className={ cn() }
+                id={ this.props.id }
+                data-test-id={ this.props['data-test-id'] }
+            >
                 { this.renderSwitcher(cn) }
                 { this.renderPopup(cn) }
             </div>

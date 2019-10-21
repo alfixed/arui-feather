@@ -1,23 +1,21 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* eslint-disable max-len */
 
 import autobind from 'core-decorators/lib/autobind';
-import { canUseDOM } from 'exenv';
 import debounce from 'lodash.debounce';
 import React from 'react';
 import Type from 'prop-types';
 import ReactDOM from 'react-dom';
-import RenderInContainer from '../render-in-container/render-in-container';
 import ResizeSensor from '../resize-sensor/resize-sensor';
 
 import { calcBestDrawingParams, calcTargetDimensions, calcFitContainerDimensions } from './calc-drawing-params';
 import cn from '../cn';
 import { HtmlElement } from '../lib/prop-types';
 import { isNodeOutsideElement } from '../lib/window';
-
-const IS_REACT_16 = !!ReactDOM.createPortal;
+import performance from '../performance';
 
 /**
  * @typedef {Object} Point
@@ -53,7 +51,8 @@ const IS_REACT_16 = !!ReactDOM.createPortal;
  * Компонент popup'а.
  */
 @cn('popup')
-class Popup extends React.PureComponent {
+@performance(true)
+class Popup extends React.Component {
     static propTypes = {
         /** Дополнительный класс */
         className: Type.string,
@@ -66,10 +65,23 @@ class Popup extends React.PureComponent {
         /** Подстраивание высоты попапа под край окна ('adaptive'), занятие попапом всей возможной высоты ('available'), 'default' */
         height: Type.oneOf(['default', 'available', 'adaptive']),
         /** Только для target='anchor', расположение (в порядке приоритета) относительно точки открытия. Первым указывается главное направление, через дефис - второстепенное направление */
-        directions: Type.arrayOf(Type.oneOf([
-            'anchor', 'top-left', 'top-center', 'top-right', 'left-top', 'left-center', 'left-bottom', 'right-top',
-            'right-center', 'right-bottom', 'bottom-left', 'bottom-center', 'bottom-right'
-        ])),
+        directions: Type.arrayOf(
+            Type.oneOf([
+                'anchor',
+                'top-left',
+                'top-center',
+                'top-right',
+                'left-top',
+                'left-center',
+                'left-bottom',
+                'right-top',
+                'right-center',
+                'right-bottom',
+                'bottom-left',
+                'bottom-center',
+                'bottom-right'
+            ])
+        ),
         /** Привязка компонента к другому элементу на странице, или его расположение независимо от остальных: 'anchor', 'position', 'screen' */
         target: Type.oneOf(['anchor', 'position', 'screen']),
         /** Только для target='anchor'. Смещение в пикселях всплывающего окна относительно основного направления */
@@ -110,7 +122,9 @@ class Popup extends React.PureComponent {
         /** Максимальная высота попапа */
         maxHeight: Type.number,
         /** Указатель на родительский элемент */
-        for: Type.string
+        for: Type.string,
+        /** Идентификатор для систем автоматизированного тестирования */
+        'data-test-id': Type.string
     };
 
     static defaultProps = {
@@ -142,7 +156,13 @@ class Popup extends React.PureComponent {
         },
         bottomGradientStyles: {
             width: '100%'
-        }
+        },
+        canUseDOM: false,
+        /*
+         * Переменная для отложенного вызова функции redraw(),
+         * которая будет вызвана после вызова componentDidMount().
+         */
+        needRedrawAfterMount: false
     };
 
     anchor = null;
@@ -164,9 +184,11 @@ class Popup extends React.PureComponent {
     }, 200);
 
     componentWillMount() {
-        if (this.context.isInCustomContainer
-            && this.context.renderContainerElement
-            && this.context.positioningContainerElement) {
+        if (
+            this.context.isInCustomContainer &&
+            this.context.renderContainerElement &&
+            this.context.positioningContainerElement
+        ) {
             this.setState({
                 receivedContainer: true
             });
@@ -183,19 +205,37 @@ class Popup extends React.PureComponent {
         }
 
         window.addEventListener('resize', this.handleWindowResize);
+
+        /* eslint-disable react/no-did-mount-set-state */
+        this.setState(
+            {
+                canUseDOM: true
+            },
+            () => {
+                if (this.state.needRedrawAfterMount) {
+                    this.redraw();
+                }
+            }
+        );
+        /* eslint-enable */
     }
 
     componentWillReceiveProps(nextProps, nextContext) {
-        if (!this.state.receivedContainer
-            && nextContext.renderContainerElement
-            && nextContext.positioningContainerElement) {
-            this.setState({
-                receivedContainer: true
-            }, () => {
-                if (this.props.visible) {
-                    this.redraw();
+        if (
+            !this.state.receivedContainer &&
+            nextContext.renderContainerElement &&
+            nextContext.positioningContainerElement
+        ) {
+            this.setState(
+                {
+                    receivedContainer: true
+                },
+                () => {
+                    if (this.props.visible) {
+                        this.redraw();
+                    }
                 }
-            });
+            );
 
             return;
         }
@@ -226,17 +266,19 @@ class Popup extends React.PureComponent {
     }
 
     render(cn) {
-        if (!canUseDOM || !this.isContainerReady()) {
+        if (!this.state.canUseDOM || !this.isContainerReady()) {
             return null;
         }
 
         let template = (
             <div
-                ref={ (popup) => { this.popup = popup; } }
+                ref={ (popup) => {
+                    this.popup = popup;
+                } }
                 data-for={ this.props.for }
                 className={ cn({
                     direction: this.state.direction,
-                    type: (this.props.target === 'anchor') && (this.props.type === 'tooltip') && this.props.type,
+                    type: this.props.target === 'anchor' && this.props.type === 'tooltip' && this.props.type,
                     target: this.props.target,
                     size: this.props.size,
                     visible: this.props.visible,
@@ -246,52 +288,47 @@ class Popup extends React.PureComponent {
                 id={ this.props.id }
                 style={ {
                     ...this.state.styles,
-                    minWidth: this.props.minWidth !== undefined ? this.props.minWidth : 0,
-                    maxWidth: this.props.maxWidth !== undefined ? this.props.maxWidth : 'none',
-                    maxHeight: this.props.maxHeight !== undefined ? this.props.maxHeight : 'none'
+                    minWidth: this.getMinWidth(),
+                    maxWidth: this.getMaxWidth(),
+                    maxHeight: this.getMaxHeight()
                 } }
                 onMouseEnter={ this.handleMouseEnter }
                 onMouseLeave={ this.handleMouseLeave }
+                data-test-id={ this.props['data-test-id'] }
             >
                 <div className={ cn('container') }>
-                    {
-                        this.props.header && (
-                            <div className={ cn('header') }>
-                                { this.props.header }
-                            </div>
-                        )
-                    }
+                    { this.props.header && <div className={ cn('header') }>{ this.props.header }</div> }
                     <div
-                        ref={ (inner) => { this.inner = inner; } }
+                        ref={ (inner) => {
+                            this.inner = inner;
+                        } }
                         className={ cn('inner') }
                         onScroll={ this.handleInnerScroll }
                     >
-                        <div className={ cn('content') } ref={ (content) => { this.content = content; } }>
+                        <div
+                            className={ cn('content') }
+                            ref={ (content) => {
+                                this.content = content;
+                            } }
+                        >
                             { this.props.children }
                             <ResizeSensor onResize={ this.handleResize } />
                         </div>
                     </div>
-                    {
-                        this.state.hasScrollbar && (
-                            <div>
-                                <div
-                                    className={ cn('gradient', { top: true }) }
-                                    style={ this.state.topGradientStyles }
-                                />
-                                <div
-                                    className={ cn('gradient', { bottom: true }) }
-                                    style={ this.state.bottomGradientStyles }
-                                />
-                            </div>
-                        )
-                    }
+                    { this.state.hasScrollbar && (
+                        <div>
+                            <div className={ cn('gradient', { top: true }) } style={ this.state.topGradientStyles } />
+                            <div
+                                className={ cn('gradient', { bottom: true }) }
+                                style={ this.state.bottomGradientStyles }
+                            />
+                        </div>
+                    ) }
                 </div>
             </div>
         );
 
-        return IS_REACT_16
-            ? ReactDOM.createPortal(template, this.getRenderContainer())
-            : <RenderInContainer container={ this.getRenderContainer() }>{ template }</RenderInContainer>;
+        return ReactDOM.createPortal(template, this.getRenderContainer());
     }
 
     @autobind
@@ -397,7 +434,7 @@ class Popup extends React.PureComponent {
      */
     getRenderContainer() {
         if (!this.context.isInCustomContainer) {
-            return IS_REACT_16 ? document.body : null;
+            return document.body;
         }
 
         return this.context.renderContainerElement;
@@ -429,9 +466,7 @@ class Popup extends React.PureComponent {
             return true;
         }
 
-        return (
-            this.context.isInCustomContainer && this.state.receivedContainer
-        );
+        return this.context.isInCustomContainer && this.state.receivedContainer;
     }
 
     /**
@@ -441,16 +476,33 @@ class Popup extends React.PureComponent {
      * @returns {Boolean}
      */
     isPropsToPositionCorrect() {
-        return (this.props.target === 'anchor' && this.anchor)
-            || (this.props.target === 'position' && this.position)
-            || (this.props.target === 'screen');
+        return (
+            (this.props.target === 'anchor' && this.anchor) ||
+            (this.props.target === 'position' && this.position) ||
+            this.props.target === 'screen'
+        );
     }
 
     @autobind
     redraw() {
-        if (!canUseDOM || !this.isContainerReady()) {
+        /*
+         * Если функция redraw() была вызвана до componentDidMount,
+         * то нужно отложить её вызов до момента,
+         * когда this.state.canUseDOM будет равен значению true.
+         *
+         * Это сделано для того, чтобы redraw() не вызывалась на серверной стороне.
+         */
+        this.setState({
+            needRedrawAfterMount: true
+        });
+
+        if (!this.state.canUseDOM || !this.isContainerReady()) {
             return;
         }
+
+        this.setState({
+            needRedrawAfterMount: false
+        });
 
         if (!this.isPropsToPositionCorrect()) {
             throw new Error('Cannot show popup without target or position');
@@ -529,6 +581,27 @@ class Popup extends React.PureComponent {
             bottom: drawingParams.bottom,
             height: this.props.height === 'adaptive' ? drawingParams.height : 'auto'
         };
+    }
+
+    /**
+     * @returns {Number}
+     */
+    getMinWidth() {
+        return this.props.minWidth !== undefined ? this.props.minWidth : 0;
+    }
+
+    /**
+     * @returns {Number}
+     */
+    getMaxWidth() {
+        return this.props.maxWidth !== undefined ? this.props.maxWidth : 'none';
+    }
+
+    /**
+     * @returns {Number}
+     */
+    getMaxHeight() {
+        return this.props.maxHeight !== undefined ? this.props.maxHeight : 'none';
     }
 
     /**

@@ -333,6 +333,20 @@ describe('calendar-input', () => {
         expect(onKeyDown).toHaveBeenCalledTimes(2);
     });
 
+    it('should render with `off` autocomplete attribute', () => {
+        let input = mount(<CalendarInput autocomplete={ false } />);
+        let controlNode = input.find('input');
+
+        expect(controlNode.props().autoComplete).toBe('off');
+    });
+
+    it('should render with `on` autocomplete attribute', () => {
+        let input = mount(<CalendarInput autocomplete={ true } />);
+        let controlNode = input.find('input');
+
+        expect(controlNode.props().autoComplete).toBe('on');
+    });
+
     describe('mobile', () => {
         beforeEach(() => {
             setMqMatched(true);
@@ -358,6 +372,27 @@ describe('calendar-input', () => {
             const inputNode = wrapper.find('input.calendar-input__native-control');
 
             expect(inputNode.props().min).toBe('2017-12-22');
+        });
+
+        it('should render date input with mobileMode=native', () => {
+            let calendarInput = mount(<CalendarInput mobileMode='native' />);
+            let dateInput = calendarInput.find('input[type="date"]');
+
+            expect(dateInput.length).toBe(1);
+        });
+
+        it('should set Popup target to `screen` with mobileMode=popup', () => {
+            let calendarInput = mount(<CalendarInput mobileMode='popup' />);
+            let popup = calendarInput.find('Popup');
+
+            expect(popup.prop('target')).toEqual('screen');
+        });
+
+        it('should not show Popup with mobileMode=input', () => {
+            let calendarInput = mount(<CalendarInput mobileMode='input' />);
+            let popup = calendarInput.find('Popup');
+
+            expect(popup.prop('visible')).toBe(false);
         });
     });
 
